@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ImageBackground,
+  StatusBar,
 } from 'react-native';
 
 export default function WelcomeScreen({ navigation }) {
@@ -13,43 +14,28 @@ export default function WelcomeScreen({ navigation }) {
     navigation.navigate('Login');
   };
 
-  const handleLearnMore = () => {
-    // Placeholder action for Learn More
-    navigation.navigate('Login');
-  };
-
   return (
     <ImageBackground
-      source={require('./assets/images/logo1.jpg')}
+      source={require('./assets/landing page.png')}
       style={styles.background}
       resizeMode="cover"
     >
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.welcomeText}>Welcome to</Text>
-            <Text style={styles.brandLine}>MOTION</Text>
-            <Text style={styles.brandLine}>PHYSIO</Text>
+        {/* Make the entire screen tap-to-continue for high responsiveness */}
+        <TouchableOpacity 
+          style={styles.touchableArea} 
+          activeOpacity={0.95} 
+          onPress={handleGetStarted}
+        >
+          {/* Action guidance at the bottom of the screen */}
+          <View style={styles.footer}>
+            <View style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>GET STARTED  →</Text>
+            </View>
+            <Text style={styles.tapPrompt}>Tap anywhere to continue</Text>
           </View>
-
-          <View style={styles.heroPlaceholder}>
-            {/* You can add overlay illustration or leave transparent */}
-          </View>
-
-          <View style={styles.buttons}>
-            <TouchableOpacity style={styles.primaryButton} onPress={handleGetStarted}>
-              <Text style={styles.primaryButtonText}>Get Started</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleGetStarted}>
-              <Text style={styles.linkText}>Sign In</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleLearnMore}>
-              <Text style={styles.linkText}>Learn More</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        </TouchableOpacity>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -58,57 +44,45 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
+    backgroundColor: '#9E0A0A', // Fallback color matching the bottom gradient
   },
   container: {
     flex: 1,
-    backgroundColor: '#021A3A',
+    backgroundColor: 'transparent',
   },
-  content: {
+  touchableArea: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 32,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
-  header: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  welcomeText: {
-    fontSize: 22,
-    color: '#BFD4FF',
-    marginBottom: 12,
-  },
-  brandLine: {
-    fontSize: 40,
-    fontWeight: '900',
-    letterSpacing: 2,
-    color: '#FFFFFF',
-  },
-  heroPlaceholder: {
-    flex: 1,
-  },
-  buttons: {
+  footer: {
+    paddingHorizontal: 28,
+    paddingBottom: 48,
     alignItems: 'center',
   },
   primaryButton: {
     width: '100%',
-    backgroundColor: '#0A84FF',
-    borderRadius: 999,
+    backgroundColor: '#FFE500', // Matches yellow branding accent
+    borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
-    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+    marginBottom: 12,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  linkText: {
+    color: '#9E0A0A', // Dark red contrast matching background
     fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 8,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+  },
+  tapPrompt: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });
-
-

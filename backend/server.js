@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 });
 
 // MongoDB Connection URI (password @ is URL-encoded as %40)
-const MONGODB_URI = 'mongodb+srv://vijaymanda323_db_user:Vijay%403369@cluster0.xhsvyzy.mongodb.net/?appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://vijaymanda323_db_user:0QjxBY4DevAX1qI3@cluster0.gu5pljo.mongodb.net/?appName=Cluster0';
 
 // Connect to MongoDB (removed deprecated options)
 mongoose.connect(MONGODB_URI)

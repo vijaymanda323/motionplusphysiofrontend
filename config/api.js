@@ -9,9 +9,9 @@ import { Platform } from 'react-native';
 // - Mac/Linux: Open Terminal and type 'ifconfig' or 'ip addr', look for inet address
 
 // Set to true to use production URL even in development mode (useful for testing deployed backend)
-const USE_PRODUCTION_URL = true; // Using deployed backend server at https://motion-video-1.onrender.com
+const USE_PRODUCTION_URL = false; // Using local backend server for testing
 
-const YOUR_COMPUTER_IP = '192.168.0.18'; // Your computer's IP address (updated to match actual IP)
+const YOUR_COMPUTER_IP = '192.168.1.38'; // Your computer's IP address (updated to match actual IP)
 const PRODUCTION_URL = 'https://motion-video-1.onrender.com/api';
 
 let API_BASE_URL;
@@ -20,11 +20,11 @@ if (__DEV__ && !USE_PRODUCTION_URL) {
   // Development mode
   // For Expo with QR code (physical device), always use computer's IP
   // For emulators/simulators, use localhost with appropriate setup
-  
+
   // Check if running in Expo (physical device via QR code)
   // Expo Go on physical device should use computer's IP
   const isExpo = typeof __DEV__ !== 'undefined' && (typeof Expo !== 'undefined' || typeof Constants !== 'undefined');
-  
+
   // For physical devices (including Expo QR code), use computer's IP
   // For emulators/simulators, use localhost
   if (Platform.OS === 'android') {

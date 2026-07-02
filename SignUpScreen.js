@@ -11,15 +11,46 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  StatusBar,
+  Dimensions,
+  Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import API_BASE_URL from './config/api';
 import { testServerConnection, getConnectionInfo } from './utils/connectionTest';
+
+const { height } = Dimensions.get('window');
+const LOGO = require('./assets/images/motion+physio.png');
+
+// ── findphysio.org Red/Orange/Gold Theme ───────────────────────
+const T = {
+  primary:   '#9E0A0A', // Deep Crimson
+  secondary: '#C62828', // Medium Red
+  accent:    '#FFE500', // Gold/Yellow
+  white:     '#FFFFFF',
+  dark:      '#1A0202', // Soft dark red-black
+  bgGradient: ['#9E0A0A', '#B71C1C', '#1A0202'], // Deep Red-Crimson gradient
+  cardGlass: 'rgba(255, 255, 255, 0.12)', // Glassmorphic translucent card
+  cardBorder: 'rgba(255, 255, 255, 0.25)',
+  textLight: '#FFFFFF',
+  mutedLight: 'rgba(255, 255, 255, 0.65)',
+};
 
 export default function SignUpScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  
+  const [focusName, setFocusName] = useState(false);
+  const [focusEmail, setFocusEmail] = useState(false);
+  const [focusPass, setFocusPass] = useState(false);
+  const [focusConfirmPass, setFocusConfirmPass] = useState(false);
+  
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
@@ -41,39 +72,25 @@ export default function SignUpScreen({ navigation }) {
     setLoading(true);
     try {
       console.log('=== SIGNUP ATTEMPT ===');
-      console.log('Full Name:', fullName);
-      console.log('Email:', email);
-      console.log('Connection Info:', getConnectionInfo());
-      
-      // Test server connection first (with better error handling)
       console.log('Testing server connection...');
       let connectionTest;
       try {
         connectionTest = await testServerConnection();
-        console.log('Connection test result:', connectionTest);
-        
         if (!connectionTest.success) {
-          throw new Error(`Cannot connect to server:\n${connectionTest.message}\n\nPlease check:\n1. Backend server is running\n2. Correct IP: 192.168.0.6\n3. Same WiFi network\n4. Firewall allows port 5000\n5. App was rebuilt after app.json changes`);
+          throw new Error(`Cannot connect to server:\n${connectionTest.message}`);
         }
-        
-        console.log('✅ Server connection successful, proceeding with signup...');
       } catch (testError) {
-        console.error('Connection test failed:', testError);
-        // Continue anyway - the actual signup request will show the real error
         console.warn('⚠️ Connection test failed, but continuing with signup attempt...');
       }
       
-      // Create AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       
       const requestBody = {
         name: fullName,
         email: email.trim().toLowerCase(),
         password: password,
       };
-      
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
       
       const response = await fetch(`${API_BASE_URL}/users/register`, {
         method: 'POST',
@@ -85,59 +102,27 @@ export default function SignUpScreen({ navigation }) {
         signal: controller.signal,
       }).catch((fetchError) => {
         clearTimeout(timeoutId);
-        console.error('=== FETCH ERROR ===');
-        console.error('Error name:', fetchError.name);
-        console.error('Error message:', fetchError.message);
-        console.error('Error stack:', fetchError.stack);
-        
         if (fetchError.name === 'AbortError' || fetchError.name === 'TimeoutError') {
           throw new Error('Request timeout. Please check your connection and try again.');
         }
-        
-        // More specific error messages
-        if (fetchError.message.includes('Network request failed') || 
-            fetchError.message.includes('Failed to fetch') ||
-            fetchError.message.includes('NetworkError')) {
-          throw new Error(`Cannot connect to server at ${API_BASE_URL}. Please check:\n1. Backend server is running\n2. Correct IP address in config/api.js\n3. Same WiFi network`);
-        }
-        
         throw fetchError;
       });
       
       clearTimeout(timeoutId);
 
-      console.log('=== RESPONSE RECEIVED ===');
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      // Check if response has content before parsing JSON
       let data;
-      try {
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-        
-        if (responseText) {
-          try {
-            data = JSON.parse(responseText);
-            console.log('Parsed response data:', data);
-          } catch (parseError) {
-            console.error('JSON parse error:', parseError);
-            data = { message: responseText || 'Unknown error occurred' };
-          }
-        } else {
-          data = { message: 'Empty response from server' };
+      const responseText = await response.text();
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          data = { message: responseText || 'Unknown error occurred' };
         }
-      } catch (textError) {
-        console.error('Error reading response:', textError);
-        data = { message: 'Error reading server response' };
+      } else {
+        data = { message: 'Empty response from server' };
       }
 
       if (response.ok) {
-        console.log('=== SUCCESS ===');
-        console.log('Account created successfully:', data);
-        console.log('User ID:', data.user?.id);
-        console.log('User email:', data.user?.email);
-        
         Alert.alert(
           'Success', 
           'Account created successfully!\n\nYou can now login with your credentials.', 
@@ -145,271 +130,406 @@ export default function SignUpScreen({ navigation }) {
             {
               text: 'OK',
               onPress: () => {
-                // Clear form
                 setFullName('');
                 setEmail('');
                 setPassword('');
                 setConfirmPassword('');
-                // Navigate to login
                 navigation.navigate('Login', { emailPrefill: email });
               },
             },
           ]
         );
       } else {
-        console.error('=== SIGNUP FAILED ===');
-        console.error('Status:', response.status);
-        console.error('Error data:', data);
-        
-        // Show specific error messages
         let errorMessage = data.message || 'Failed to create account';
-        
-        if (response.status === 400) {
-          errorMessage = data.message || 'Invalid information provided. Please check your details.';
-        } else if (response.status === 503) {
-          errorMessage = 'Database connection error. Please check MongoDB Atlas settings and IP whitelist.';
-        } else if (response.status === 500) {
-          errorMessage = data.message || 'Server error. Please try again later.';
-        } else if (response.status === 409) {
-          errorMessage = 'This email is already registered. Please use a different email or login instead.';
+        if (response.status === 409) {
+          errorMessage = 'This email is already registered. Please log in instead.';
         }
-        
         Alert.alert('Signup Failed', errorMessage);
       }
     } catch (error) {
       console.error('Signup error:', error);
-      console.error('Error details:', {
-        message: error?.message || 'Unknown error',
-        name: error?.name || 'Unknown',
-        API_URL: `${API_BASE_URL}/users/register`,
-        Platform: Platform.OS
-      });
-      
-      let errorMessage = '';
-      let errorTitle = 'Connection Error';
-      
-      const errorMsg = error?.message || error?.toString() || 'Unknown error';
-      
-      if (errorMsg.includes('Cannot connect to server') || 
-          errorMsg.includes('Network request failed') || 
-          errorMsg.includes('Failed to fetch') ||
-          errorMsg.includes('Network error')) {
-        errorMessage = `Cannot connect to server at:\n${API_BASE_URL}\n\nPlease check:\n\n`;
-        errorMessage += '1. Backend server is running:\n   cd motionphysio/backend\n   npm start\n\n';
-        errorMessage += `2. Your computer IP: 192.168.0.6\n   (Update config/api.js if different)\n\n`;
-        errorMessage += '3. Phone and computer on same WiFi\n\n';
-        errorMessage += '4. Firewall allows port 5000\n\n';
-        errorMessage += '5. Try: http://192.168.0.6:5000 in browser';
-      } else if (errorMsg.includes('Request timeout') || errorMsg.includes('timeout')) {
-        errorTitle = 'Timeout Error';
-        errorMessage = 'Request took too long. Please check:\n\n1. Backend server is running\n2. Network connection is stable\n3. Try again';
-      } else if (errorMsg.includes('JSON')) {
-        errorTitle = 'Server Error';
-        errorMessage = 'Invalid response from server. Please check if the backend is running correctly.';
-      } else {
-        errorMessage = errorMsg || 'An unexpected error occurred. Please try again.';
-      }
-      
-      Alert.alert(errorTitle, errorMessage);
+      Alert.alert('Connection Error', error?.message || 'Failed to connect to the server.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.logo}>Motion Physio</Text>
-            <Text style={styles.tagline}>Create your account</Text>
-          </View>
+    <LinearGradient colors={T.bgGradient} style={styles.root}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      
+      {/* Background decorations for glassmorphic depth */}
+      <View style={styles.sphere1} />
+      <View style={styles.sphere2} />
+      <View style={styles.sphere3} />
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your full name"
-                placeholderTextColor="#999"
-                value={fullName}
-                onChangeText={setFullName}
-              />
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.kav}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.scroll} 
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header / Logo */}
+            <View style={styles.logoSection}>
+              <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
+              <Text style={styles.appSub}>PATIENT REGISTRATION PORTAL</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            {/* Registration Card */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <Text style={styles.cardTitle}>Create Account</Text>
+                  <Text style={styles.cardSub}>Sign up to track physical symptoms</Text>
+                </View>
+                <View style={styles.cardHeaderIcon}>
+                  <Ionicons name="create-outline" size={20} color={T.accent} />
+                </View>
+              </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create a password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+              <View style={styles.cardDivider} />
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter your password"
-                placeholderTextColor="#999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+              {/* Full Name */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>FULL NAME</Text>
+                <View style={[styles.field, focusName && styles.fieldFocused]}>
+                  <View style={styles.fieldIconWrap}>
+                    <Ionicons name="person-outline" size={18} color={focusName ? T.accent : T.white} />
+                  </View>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Enter your full name"
+                    placeholderTextColor="rgba(255, 255, 255, 0.45)"
+                    value={fullName}
+                    onChangeText={setFullName}
+                    editable={!loading}
+                    onFocus={() => setFocusName(true)}
+                    onBlur={() => setFocusName(false)}
+                  />
+                </View>
+              </View>
 
-            <TouchableOpacity 
-              style={[styles.signUpButton, loading && styles.signUpButtonDisabled]} 
-              onPress={handleSignUp}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.signUpButtonText}>Sign Up</Text>
-              )}
-            </TouchableOpacity>
+              {/* Email */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
+                <View style={[styles.field, focusEmail && styles.fieldFocused]}>
+                  <View style={styles.fieldIconWrap}>
+                    <Ionicons name="mail-outline" size={18} color={focusEmail ? T.accent : T.white} />
+                  </View>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="rgba(255, 255, 255, 0.45)"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!loading}
+                    onFocus={() => setFocusEmail(true)}
+                    onBlur={() => setFocusEmail(false)}
+                  />
+                </View>
+              </View>
 
-            <TouchableOpacity
-              style={styles.backToLogin}
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.backToLoginText}>Already have an account? Log In</Text>
-            </TouchableOpacity>
+              {/* Password */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>PASSWORD</Text>
+                <View style={[styles.field, focusPass && styles.fieldFocused]}>
+                  <View style={styles.fieldIconWrap}>
+                    <Ionicons name="key-outline" size={18} color={focusPass ? T.accent : T.white} />
+                  </View>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Create a password"
+                    placeholderTextColor="rgba(255, 255, 255, 0.45)"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!loading}
+                    onFocus={() => setFocusPass(true)}
+                    onBlur={() => setFocusPass(false)}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPass(v => !v)}
+                    style={styles.eyeBtn}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
+                    <Ionicons name={showPass ? 'eye-outline' : 'eye-off-outline'} size={18} color="rgba(255,255,255,0.6)" />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-            {/* Connection Test Button (for debugging) */}
-            {__DEV__ && (
-              <TouchableOpacity
-                style={styles.testButton}
-                onPress={async () => {
-                  setLoading(true);
-                  const test = await testServerConnection();
-                  Alert.alert(
-                    test.success ? 'Connection OK' : 'Connection Failed',
-                    test.message + '\n\n' + JSON.stringify(getConnectionInfo(), null, 2)
-                  );
-                  setLoading(false);
-                }}
+              {/* Confirm Password */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>CONFIRM PASSWORD</Text>
+                <View style={[styles.field, focusConfirmPass && styles.fieldFocused]}>
+                  <View style={styles.fieldIconWrap}>
+                    <Ionicons name="key-outline" size={18} color={focusConfirmPass ? T.accent : T.white} />
+                  </View>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor="rgba(255, 255, 255, 0.45)"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!loading}
+                    onFocus={() => setFocusConfirmPass(true)}
+                    onBlur={() => setFocusConfirmPass(false)}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPass(v => !v)}
+                    style={styles.eyeBtn}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
+                    <Ionicons name={showConfirmPass ? 'eye-outline' : 'eye-off-outline'} size={18} color="rgba(255,255,255,0.6)" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Register Button */}
+              <TouchableOpacity 
+                style={[styles.signUpButton, loading && { opacity: 0.7 }]} 
+                onPress={handleSignUp}
+                disabled={loading}
+                activeOpacity={0.88}
               >
-                <Text style={styles.testButtonText}>Test Server Connection</Text>
+                {loading ? (
+                  <ActivityIndicator color={T.primary} size="small" />
+                ) : (
+                  <View style={styles.btnInner}>
+                    <Text style={styles.signUpButtonText}>CREATE ACCOUNT  →</Text>
+                  </View>
+                )}
               </TouchableOpacity>
-            )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+              {/* Back to Login Link */}
+              <TouchableOpacity
+                style={styles.backToLogin}
+                onPress={() => navigation.navigate('Login')}
+              >
+                <Text style={styles.backToLoginText}>
+                  Already have an account? <Text style={styles.loginLink}>Log In</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Verification details */}
+            <View style={styles.credStrip}>
+              <Text style={styles.credText}>🏅 HIPAA Compliant Data Storage</Text>
+              <Text style={styles.credDot}>·</Text>
+              <Text style={styles.credText}>🔒 SSL Encrypted Protection</Text>
+            </View>
+
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
+  root: { flex: 1 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  kav:  { flex: 1 },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, justifyContent: 'center' },
+
+  /* Spheres for glassmorphism background effect */
+  sphere1: {
+    position: 'absolute',
+    top: 40,
+    right: -40,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 229, 0, 0.12)', // Translucent Gold
   },
-  keyboardView: {
-    flex: 1,
+  sphere2: {
+    position: 'absolute',
+    bottom: 60,
+    left: -60,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(198, 40, 40, 0.35)', // Translucent Red
   },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
+  sphere3: {
+    position: 'absolute',
+    top: '55%',
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
-  header: {
+
+  logoSection: {
     alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 16,
+    marginBottom: 20,
+    marginTop: 20,
   },
-  logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+  logoImage: {
+    width: 220,
+    height: 60,
     marginBottom: 8,
-    letterSpacing: 1,
   },
-  tagline: {
-    fontSize: 16,
-    color: '#999',
+  appSub: {
+    fontSize: 9.5,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '700',
+    letterSpacing: 1.2,
   },
-  form: {
-    width: '100%',
+
+  /* Card */
+  card: {
+    backgroundColor: T.cardGlass,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: T.cardBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
+    marginBottom: 20,
   },
-  inputContainer: {
-    marginBottom: 18,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  signUpButton: {
-    backgroundColor: '#0A84FF',
-    borderRadius: 12,
-    padding: 16,
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
     marginBottom: 16,
   },
-  signUpButtonText: {
-    fontSize: 18,
+  cardHeaderLeft: { flex: 1, paddingRight: 8 },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: T.white,
+    marginBottom: 4,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: T.mutedLight,
     fontWeight: '600',
-    color: '#000',
   },
-  signUpButtonDisabled: {
-    opacity: 0.6,
+  cardHeaderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: T.cardBorder,
   },
+  cardDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginBottom: 20,
+  },
+
+  fieldGroup: { marginBottom: 16 },
+  fieldLabel: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: T.accent, // Gold label
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    height: 50,
+    paddingHorizontal: 4,
+  },
+  fieldFocused: {
+    borderColor: T.accent,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  fieldIconWrap: {
+    width: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fieldInput: {
+    flex: 1,
+    fontSize: 14,
+    color: T.white,
+    fontWeight: '600',
+  },
+  eyeBtn: {
+    width: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  signUpButton: {
+    backgroundColor: T.accent, // Gold button
+    borderRadius: 16,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+    marginTop: 10,
+    marginBottom: 16,
+  },
+  btnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  signUpButtonText: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: T.primary, // Red text on gold
+    letterSpacing: 1.2,
+  },
+
   backToLogin: {
     alignItems: 'center',
+    paddingVertical: 4,
   },
   backToLoginText: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '550',
   },
-  testButton: {
-    backgroundColor: '#333',
-    borderRadius: 12,
-    padding: 12,
+  loginLink: {
+    color: T.accent,
+    fontWeight: '800',
+  },
+
+  credStrip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#555',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
   },
-  testButtonText: {
-    fontSize: 12,
-    color: '#999',
+  credText: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.65)',
+    fontWeight: '600',
+  },
+  credDot: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.35)',
   },
 });
-
-

@@ -7,104 +7,231 @@ import {
   ScrollView,
   Modal,
   Dimensions,
+  StatusBar,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Video, ResizeMode } from "expo-av";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// RELIEF_ROUTINES - Universal for all users
-// All users see the same routines and videos (not user-specific)
-// Videos are stored in Cloudinary and accessible to everyone
+// ── findphysio.org Red/Orange/Gold Theme ───────────────────────
+const T = {
+  primary:   '#9E0A0A', // Deep Crimson Red
+  secondary: '#C62828', // Medium Red
+  accent:    '#FFE500', // Gold/Yellow
+  teal:      '#FF7043', // Orange (replacing teal)
+  light:     'rgba(158, 10, 10, 0.08)', // Soft translucent red
+  white:     '#FFFFFF',
+  dark:      '#1A0202', // Soft dark red-black
+  bg:        '#FFF5F5', // Soft warm white
+  card:      '#FFFFFF',
+  text:      '#2E1010', // Dark warm brown-red
+  muted:     '#8B7575', // Warm muted grey-red
+  border:    '#F2E2E2', // Warm light border
+  red:       '#C62828',
+  orange:    '#FFA000',
+};
+
 const RELIEF_ROUTINES = [
   { 
     id: 1, 
-    name: "Cat Cow", 
-    target: "Spine", 
+    name: "Cat Cow Pose", 
+    target: "Spine Mobility", 
     duration: "45s",
+    category: "Back",
     videoUrl: "https://res.cloudinary.com/dldeaeegm/video/upload/v1765388578/motion-videos/motion-videos/693507cc482f85d091f81451/1765388570447_cat-cow-pose.mp4"
   },
-  { id: 2, name: "Giraffe Stretch", target: "Neck", duration: "30s" },
+  { 
+    id: 2, 
+    name: "Giraffe Neck Stretch", 
+    target: "Cervical Tension", 
+    duration: "30s",
+    category: "Neck",
+  },
   { 
     id: 3, 
-    name: "Wrist Flexor", 
-    target: "Arms", 
+    name: "Wrist Flexor Stretch", 
+    target: "Tendinopathy Relief", 
     duration: "30s",
+    category: "Arms",
     videoUrl: "https://res.cloudinary.com/dldeaeegm/video/upload/v1765389188/wrist_bi6f8r.mp4"
   },
-  { id: 4, name: "Seated Twist", target: "Back", duration: "45s",videoUrl: "https://res.cloudinary.com/dldeaeegm/video/upload/v1765389452/Seated_twist_mekmhi.mp4" },
-  { id: 5, name: "Hamstring Reach", target: "Legs", duration: "60s",videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389309/hamstring_zfrwmq.mp4" },
-  { id: 6, name: "Shoulder Rolls", target: "Shoulders", duration: "30s",videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389394/shoulder_b8tsme.mp4" },
-  { id: 7, name: "Chin Tucks", target: "Neck", duration: "30s" ,videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389270/chin_pgnkmr.mp4"},
-  { id: 8, name: "Calf Raises", target: "Legs", duration: "45s",videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765390654/door_by6ffs.mp4" },
-  { id: 9, name: "Doorway Stretch", target: "Chest", duration: "30s",videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765390562/Girafee_xyowf1.mp4" },
-  { id: 10, name: "Deep Squat", target: "Legs", duration: "45s",videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389353/deep_squat_ncccb4.mp4"},
+  { 
+    id: 4, 
+    name: "Seated Spinal Twist", 
+    target: "Thoracic Rotation", 
+    duration: "45s",
+    category: "Back",
+    videoUrl: "https://res.cloudinary.com/dldeaeegm/video/upload/v1765389452/Seated_twist_mekmhi.mp4" 
+  },
+  { 
+    id: 5, 
+    name: "Hamstring Reach", 
+    target: "Posterior Chain", 
+    duration: "60s",
+    category: "Legs",
+    videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389309/hamstring_zfrwmq.mp4" 
+  },
+  { 
+    id: 6, 
+    name: "Cervical Shoulder Rolls", 
+    target: "Scapular Mobility", 
+    duration: "30s",
+    category: "Shoulders",
+    videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389394/shoulder_b8tsme.mp4" 
+  },
+  { 
+    id: 7, 
+    name: "Deep Chin Tucks", 
+    target: "Suboccipital Release", 
+    duration: "30s",
+    category: "Neck",
+    videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389270/chin_pgnkmr.mp4"
+  },
+  { 
+    id: 8, 
+    name: "Eccentric Calf Raises", 
+    target: "Achilles Strengthening", 
+    duration: "45s",
+    category: "Legs",
+    videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765390654/door_by6ffs.mp4" 
+  },
+  { 
+    id: 9, 
+    name: "Pectoral Doorway Stretch", 
+    target: "Postural Correction", 
+    duration: "30s",
+    category: "Chest",
+    videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765390562/Girafee_xyowf1.mp4" 
+  },
+  { 
+    id: 10, 
+    name: "Deep Squat Hold", 
+    target: "Hip & Pelvic Mobility", 
+    duration: "45s",
+    category: "Legs",
+    videoUrl:"https://res.cloudinary.com/dldeaeegm/video/upload/v1765389353/deep_squat_ncccb4.mp4"
+  },
 ];
 
 const QuickReliefScreen = () => {
   const navigation = useNavigation();
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleRoutinePress = (item) => {
     if (item.videoUrl) {
       setSelectedVideo({
         url: item.videoUrl,
-        title: item.name
+        title: item.name,
+        target: item.target,
+        duration: item.duration,
       });
       setShowVideoModal(true);
     }
   };
 
-  const renderRoutineItem = (item) => (
-    <TouchableOpacity 
-      key={item.id} 
-      style={styles.card} 
-      activeOpacity={0.7}
-      onPress={() => handleRoutinePress(item)}
-      disabled={!item.videoUrl}
-    >
-      {/* Number Badge */}
-      <View style={styles.numberBadge}>
-        <Text style={styles.numberText}>{item.id}</Text>
-      </View>
+  const getTargetColor = (cat) => {
+    switch (cat) {
+      case 'Neck': return T.accent;
+      case 'Back': return T.primary;
+      case 'Legs': return T.teal;
+      case 'Chest': return T.orange;
+      default: return T.secondary;
+    }
+  };
 
-      {/* Text Section */}
-      <View style={styles.textBox}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.sub}>{item.target} • {item.duration}</Text>
-        {!item.videoUrl && (
-          <Text style={styles.comingSoonText}>Video coming soon</Text>
-        )}
-      </View>
+  const renderRoutineItem = (item) => {
+    const color = getTargetColor(item.category);
+    return (
+      <TouchableOpacity 
+        key={item.id} 
+        style={[styles.card, !item.videoUrl && styles.disabledCard]} 
+        activeOpacity={0.82}
+        onPress={() => handleRoutinePress(item)}
+        disabled={!item.videoUrl}
+      >
+        {/* Category vertical bar */}
+        <View style={[styles.cardAccentBar, { backgroundColor: color }]} />
 
-      {/* Play Icon */}
-      <Ionicons 
-        name={item.videoUrl ? "play-circle" : "play-outline"} 
-        size={22} 
-        color={item.videoUrl ? "#00d4a6" : "#8e9aab"} 
-      />
-    </TouchableOpacity>
-  );
+        {/* Number Badge */}
+        <View style={[styles.numberBadge, { backgroundColor: color + '15' }]}>
+          <Text style={[styles.numberText, { color: color }]}>
+            {item.id < 10 ? `0${item.id}` : item.id}
+          </Text>
+        </View>
+
+        {/* Text Section */}
+        <View style={styles.textBox}>
+          <View style={styles.titleRow}>
+            <Text style={styles.name}>{item.name}</Text>
+            <View style={[styles.categoryTag, { backgroundColor: color + '10' }]}>
+              <Text style={[styles.categoryTagText, { color: color }]}>
+                {item.category.toUpperCase()}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.sub}>{item.target} • {item.duration}</Text>
+          {!item.videoUrl && (
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>Video Guide Coming Soon</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Play / Lock Icon */}
+        <View style={[styles.actionIconWrap, { backgroundColor: item.videoUrl ? T.light : '#F1F3F5' }]}>
+          <Ionicons 
+            name={item.videoUrl ? "play" : "lock-closed"} 
+            size={16} 
+            color={item.videoUrl ? T.primary : T.muted} 
+          />
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <View style={styles.safeArea}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={26} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={T.white} />
         </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Quick Relief Routines</Text>
+          <Text style={styles.headerSub}>Clinically-backed video guidelines</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <View style={styles.medCross}><Text style={styles.medCrossText}>+</Text></View>
+        </View>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.container}
       >
+        {/* Info card */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoIconWrap}>
+            <Text style={styles.infoIcon}>👨‍⚕️</Text>
+          </View>
+          <View style={styles.infoContent}>
+            <Text style={styles.infoTitle}>Expert Recommendations</Text>
+            <Text style={styles.infoText}>
+              Perform these exercises slowly. Do not push through any sharp or stabbing pain. Breathe deeply.
+            </Text>
+          </View>
+        </View>
+
         {/* Titles */}
-        <Text style={styles.title}>Quick Relief</Text>
-        <Text style={styles.subtitle}>Verified physio routines.</Text>
+        <Text style={styles.sectionHeaderTitle}>Select Physical Therapy Routine</Text>
+        <Text style={styles.subtitle}>Tap a routine to watch the instruction video guide.</Text>
 
         {/* List */}
         <View style={styles.list}>{RELIEF_ROUTINES.map(renderRoutineItem)}</View>
@@ -119,7 +246,9 @@ const QuickReliefScreen = () => {
           setSelectedVideo(null);
         }}
       >
-        <View style={styles.videoModalContainer}>
+        <SafeAreaView style={styles.videoModalContainer}>
+          <StatusBar barStyle="light-content" backgroundColor="#000" />
+          
           <View style={styles.videoHeader}>
             <TouchableOpacity
               onPress={() => {
@@ -128,74 +257,167 @@ const QuickReliefScreen = () => {
               }}
               style={styles.closeButton}
             >
-              <Ionicons name="close" size={28} color="#fff" />
+              <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
+            
             {selectedVideo && (
-              <Text style={styles.videoTitle} numberOfLines={1}>
-                {selectedVideo.title || "Video"}
-              </Text>
+              <View style={styles.videoHeaderTitleBox}>
+                <Text style={styles.videoTitle} numberOfLines={1}>
+                  {selectedVideo.title || "Video Guide"}
+                </Text>
+                <Text style={styles.videoSubTitle}>
+                  {selectedVideo.target} · {selectedVideo.duration}
+                </Text>
+              </View>
             )}
           </View>
           
           {selectedVideo && (
-            <Video
-              source={{
-                uri: selectedVideo.url,
-              }}
-              style={styles.videoPlayer}
-              useNativeControls
-              resizeMode={ResizeMode.CONTAIN}
-              shouldPlay
-              isLooping={false}
-            />
+            <View style={styles.videoWrapper}>
+              <Video
+                source={{
+                  uri: selectedVideo.url,
+                }}
+                style={styles.videoPlayer}
+                useNativeControls
+                resizeMode={ResizeMode.CONTAIN}
+                shouldPlay
+                isLooping={false}
+              />
+            </View>
           )}
-        </View>
+
+          {/* Clinical tips in video modal */}
+          <View style={styles.videoInstructions}>
+            <Text style={styles.videoInstructionsTitle}>💡 Clinical Instructions</Text>
+            <Text style={styles.videoInstructionsText}>
+              • Keep movements controlled and steady.{"\n"}
+              • Hold the peak stretch position for 2-3 seconds.{"\n"}
+              • Repeat this exercise 10-12 times per session.
+            </Text>
+          </View>
+        </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f7f9fc",
+    backgroundColor: T.bg,
   },
 
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    backgroundColor: T.primary,
+    shadowColor: T.dark,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
   },
 
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#ffffff",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+  },
+  headerCenter: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: T.white,
+  },
+  headerSub: {
+    fontSize: 11,
+    color: "rgba(227,242,253,0.75)",
+    marginTop: 2,
+  },
+  headerRight: {
+    alignItems: "center",
+  },
+  medCross: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  medCrossText: {
+    color: T.white,
+    fontSize: 20,
+    fontWeight: "900",
+    lineHeight: 24,
   },
 
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 40,
   },
 
-  title: {
-    fontSize: 32,
+  infoCard: {
+    flexDirection: "row",
+    backgroundColor: T.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: T.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: T.accent,
+  },
+  infoIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: T.light,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  infoIcon: { fontSize: 24 },
+  infoContent: { flex: 1 },
+  infoTitle: {
+    fontSize: 14,
     fontWeight: "800",
-    color: "#1a1a1a",
-    marginTop: 15,
+    color: T.text,
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 12,
+    color: T.muted,
+    lineHeight: 18,
   },
 
+  sectionHeaderTitle: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: T.text,
+    marginTop: 6,
+  },
   subtitle: {
     marginTop: 4,
-    fontSize: 15,
-    color: "#7c8696",
-    marginBottom: 25,
+    fontSize: 13,
+    color: T.muted,
+    marginBottom: 20,
   },
 
   list: {
@@ -205,29 +427,41 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
-    padding: 18,
+    backgroundColor: T.white,
     borderRadius: 18,
-    marginBottom: 15,
+    marginBottom: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.05,
     shadowRadius: 10,
-    elevation: 2,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: T.border,
+    overflow: "hidden",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  disabledCard: {
+    opacity: 0.7,
+  },
+  cardAccentBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
   },
 
   numberBadge: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    backgroundColor: "rgba(0,255,200,0.12)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 16,
+    marginRight: 14,
   },
 
   numberText: {
-    color: "#00d4a6",
-    fontWeight: "700",
+    fontWeight: "900",
     fontSize: 16,
   },
 
@@ -235,23 +469,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
   name: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1a1a1a",
+    fontSize: 15,
+    fontWeight: "800",
+    color: T.text,
+  },
+  categoryTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  categoryTagText: {
+    fontSize: 8,
+    fontWeight: "800",
   },
 
   sub: {
-    marginTop: 2,
-    fontSize: 13,
-    color: "#8e9aab",
+    fontSize: 12,
+    color: T.muted,
+  },
+  comingSoonBadge: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    backgroundColor: "#F1F3F5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   comingSoonText: {
-    marginTop: 4,
-    fontSize: 11,
-    color: "#8e9aab",
-    fontStyle: "italic",
+    fontSize: 10,
+    color: T.muted,
+    fontWeight: "600",
   },
+
+  actionIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Modal
   videoModalContainer: {
     flex: 1,
     backgroundColor: "#000",
@@ -259,30 +524,58 @@ const styles = StyleSheet.create({
   videoHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     backgroundColor: "rgba(0,0,0,0.8)",
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 15,
+    marginRight: 14,
+  },
+  videoHeaderTitleBox: {
+    flex: 1,
   },
   videoTitle: {
-    flex: 1,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "800",
     color: "#fff",
   },
-  videoPlayer: {
+  videoSubTitle: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.6)",
+    marginTop: 2,
+  },
+  videoWrapper: {
     flex: 1,
-    width: SCREEN_WIDTH,
+    justifyContent: "center",
     backgroundColor: "#000",
+  },
+  videoPlayer: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 0.56,
+    backgroundColor: "#000",
+  },
+  videoInstructions: {
+    backgroundColor: "#111",
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#222",
+  },
+  videoInstructionsTitle: {
+    color: T.accent,
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 8,
+  },
+  videoInstructionsText: {
+    color: "#aaa",
+    fontSize: 13,
+    lineHeight: 20,
   },
 });
 

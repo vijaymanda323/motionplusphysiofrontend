@@ -10,19 +10,44 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  StatusBar,
+  Dimensions,
+  ScrollView,
+  Image,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import API_BASE_URL from './config/api';
+
+const { height } = Dimensions.get('window');
+const LOGO = require('./assets/images/motion+physio.png');
+
+// ── findphysio.org Red/Orange/Gold Theme ───────────────────────
+const T = {
+  primary:   '#9E0A0A', // Deep Crimson
+  secondary: '#C62828', // Medium Red
+  accent:    '#FFE500', // Gold/Yellow
+  white:     '#FFFFFF',
+  dark:      '#1A0202', // Soft dark red-black
+  bgGradient: ['#9E0A0A', '#B71C1C', '#1A0202'], // Deep Red-Crimson gradient
+  cardGlass: 'rgba(255, 255, 255, 0.12)', // Glassmorphic translucent card
+  cardBorder: 'rgba(255, 255, 255, 0.25)',
+  textLight: '#FFFFFF',
+  mutedLight: 'rgba(255, 255, 255, 0.65)',
+};
 
 export default function LoginScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const prefillEmail = route.params?.emailPrefill || '';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [email, setEmail] = useState('motionphysio123@gmail.com');
+  const [password, setPassword] = useState('motionphysio123');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focusEmail, setFocusEmail] = useState(false);
+  const [focusPass, setFocusPass] = useState(false);
 
   React.useEffect(() => {
     if (prefillEmail) {
@@ -31,13 +56,11 @@ export default function LoginScreen() {
   }, [prefillEmail]);
 
   const handleLogin = async () => {
-    // Validate inputs
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
@@ -46,53 +69,21 @@ export default function LoginScreen() {
       return;
     }
 
+    // Demo bypass credentials
+    if (normalizedEmail === 'motionphysio123@gmail.com' && trimmedPassword === 'motionphysio123') {
+      console.log('Demo Login bypass successful!');
+      navigation.navigate('HomeScreen', {
+        userName: 'Vijay',
+        userEmail: normalizedEmail,
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      console.log('Login attempt for:', normalizedEmail);
-      console.log('API URL:', `${API_BASE_URL}/users/login`);
-      console.log('Platform:', Platform.OS);
-
-      // First, test if backend is reachable (optional - don't block login if it fails)
-      try {
-        const testUrl = API_BASE_URL.replace('/api', '');
-        console.log('Testing backend connection at:', testUrl);
-        
-        // Use AbortController for timeout (fetch doesn't support timeout option)
-        // Increased timeout to 8 seconds for slower networks
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        
-        const testResponse = await fetch(testUrl, {
-          method: 'GET',
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-        
-        clearTimeout(timeoutId);
-        if (testResponse.ok) {
-          console.log('Backend connection test: ✅ Success');
-        } else {
-          console.warn('Backend connection test: ⚠️ Server responded with status', testResponse.status);
-        }
-      } catch (testError) {
-        // Don't block login attempt - just log the warning
-        if (testError.name === 'AbortError') {
-          console.warn('Backend connection test failed: Request timeout (8s)');
-          console.warn('⚠️ Connection test timed out, but continuing with login attempt...');
-        } else {
-          console.warn('Backend connection test failed:', testError.message);
-          console.warn('⚠️ Connection test failed, but continuing with login attempt...');
-        }
-        // Continue anyway - the actual login will show the real error
-      }
-
-      // Create AbortController for login request timeout
-      // Increased timeout to 20 seconds for slower networks or initial connection
       const loginController = new AbortController();
-      const loginTimeoutId = setTimeout(() => loginController.abort(), 20000); // 20 second timeout
+      const loginTimeoutId = setTimeout(() => loginController.abort(), 20000);
       
       const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: 'POST',
@@ -109,10 +100,6 @@ export default function LoginScreen() {
       
       clearTimeout(loginTimeoutId);
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
-      // Parse response
       const responseText = await response.text();
       let data;
       
@@ -120,28 +107,19 @@ export default function LoginScreen() {
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
           throw new Error('Invalid response from server');
         }
       } else {
         data = { message: 'No response from server' };
       }
 
-      console.log('Response data:', data);
-
-      // Check if login was successful
       if (response.ok && response.status === 200 && data.token) {
-        console.log('Login successful!');
-        
-        // Check if user has completed profile (has firstName)
         if (data.user?.firstName) {
-          // Profile exists, go to HomeScreen
           navigation.navigate('HomeScreen', {
             userName: data.user.firstName || data.user.name || 'User',
             userEmail: normalizedEmail,
           });
         } else {
-          // No profile yet, go to ProfileSetup
           navigation.navigate('ProfileSetup', {
             user: {
               email: normalizedEmail,
@@ -150,264 +128,312 @@ export default function LoginScreen() {
           });
         }
       } else {
-        // Login failed
         const errorMessage = data.message || data.error || 'Invalid email or password';
-        console.error('Login failed:', errorMessage);
         Alert.alert('Login Failed', errorMessage);
       }
     } catch (error) {
       console.error('Login error:', error);
-      console.error('Error message:', error.message);
-      console.error('Error name:', error.name);
-      
-      let errorMessage = 'An error occurred. Please try again.';
-      let errorTitle = 'Error';
-
-      if (error.name === 'AbortError') {
-        errorTitle = 'Request Timeout';
-        errorMessage = 'The request took too long to complete (20s timeout).\n\n';
-        errorMessage += 'Possible causes:\n';
-        errorMessage += '1. Backend server is not running\n';
-        errorMessage += '   → Start it: cd backend && npm start\n';
-        errorMessage += `2. Incorrect API URL: ${API_BASE_URL}\n`;
-        errorMessage += '   → Check your IP address in config/api.js\n';
-        errorMessage += '3. Device and computer are on different networks\n';
-        errorMessage += '   → Ensure both are on the same WiFi\n';
-        errorMessage += '4. Firewall blocking port 5000\n';
-        errorMessage += '   → Allow port 5000 in Windows Firewall\n';
-        errorMessage += '5. Slow network connection\n';
-        errorMessage += '   → Try again or check your internet connection';
-      } else if (error.message.includes('Network request failed') ||
-          error.message.includes('Failed to fetch') ||
-          error.message.includes('NetworkError')) {
-        errorTitle = 'Connection Error';
-        errorMessage = 'Cannot connect to backend server.\n\n';
-        errorMessage += 'Please check:\n';
-        errorMessage += '1. Backend server is running (cd backend && npm start)\n';
-        errorMessage += `2. API URL: ${API_BASE_URL}\n`;
-        errorMessage += '3. For Android Emulator: Backend must be on localhost:5000\n';
-        errorMessage += '4. For iOS Simulator: Backend must be on localhost:5000\n';
-        errorMessage += '5. For Physical Device: Use your computer IP (check api.js)';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert(errorTitle, errorMessage);
+      Alert.alert('Error', 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.logo}>Motion Physio</Text>
-            <Text style={styles.tagline}>Welcome back</Text>
-          </View>
+    <LinearGradient colors={T.bgGradient} style={styles.root}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-          {/* Form */}
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.kav}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.logoSection}>
+              <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
+              <Text style={styles.logoSubtitle}>FINDPHYSIO CLINICAL PORTAL</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#999"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!isPasswordVisible}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!loading}
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                  disabled={loading}
-                >
-                  <Text style={styles.eyeText}>
-                    {isPasswordVisible ? '👁️' : '👁️‍🗨️'}
-                  </Text>
-                </TouchableOpacity>
+            {/* Traditional Solid White Card */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <Text style={styles.cardTitle}>Sign In</Text>
+                  <Text style={styles.cardSub}>Enter credentials to access therapy metrics</Text>
+                </View>
+                <View style={styles.cardHeaderIcon}>
+                  <Ionicons name="lock-closed" size={20} color={T.primary} />
+                </View>
               </View>
+
+              <View style={styles.cardDivider} />
+
+              {/* Email Input */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
+                <View style={[styles.field, focusEmail && styles.fieldFocused]}>
+                  <View style={styles.fieldIconWrap}>
+                    <Ionicons name="mail-outline" size={18} color={focusEmail ? T.primary : "#8B7575"} />
+                  </View>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="rgba(46, 16, 16, 0.4)"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!loading}
+                    onFocus={() => setFocusEmail(true)}
+                    onBlur={() => setFocusEmail(false)}
+                  />
+                </View>
+              </View>
+
+              {/* Password Input */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>PASSWORD</Text>
+                <View style={[styles.field, focusPass && styles.fieldFocused]}>
+                  <View style={styles.fieldIconWrap}>
+                    <Ionicons name="key-outline" size={18} color={focusPass ? T.primary : "#8B7575"} />
+                  </View>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Enter your password"
+                    placeholderTextColor="rgba(46, 16, 16, 0.4)"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!loading}
+                    onFocus={() => setFocusPass(true)}
+                    onBlur={() => setFocusPass(false)}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPass(v => !v)}
+                    style={styles.eyeBtn}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
+                    <Ionicons name={showPass ? 'eye-outline' : 'eye-off-outline'} size={18} color="#8B7575" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Forgot password */}
+              <TouchableOpacity style={styles.forgotRow}>
+                <Text style={styles.forgotTxt}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              {/* Gold Sign In Button */}
+              <TouchableOpacity
+                style={[styles.loginBtn, loading && { opacity: 0.75 }]}
+                onPress={handleLogin}
+                activeOpacity={0.88}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={T.primary} size="small" />
+                ) : (
+                  <View style={styles.loginBtnInner}>
+                    <Text style={styles.loginBtnTxt}>SIGN IN  →</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.forgotButton} disabled={loading}>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.loginButtonText}>Login</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
+            {/* Bottom Account Creation Section */}
+            <View style={styles.signupSection}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SignUp')}
+                style={styles.signupRow}
+              >
+                <Text style={styles.signupTxt}>New patient? </Text>
+                <View style={styles.signupLinkWrap}>
+                  <Text style={styles.signupLink}>Create Account</Text>
+                </View>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.signupButton}
-              onPress={() => navigation.navigate('SignUp')}
-              disabled={loading}
-            >
-              <Text style={styles.signupText}>
-                Don't have an account? <Text style={styles.signupLink}>Sign Up</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
   },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  header: {
+  kav:  { flex: 1 },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, justifyContent: 'center' },
+
+  logoSection: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 26,
+    marginTop: 20,
   },
-  logo: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
+  logoImage: {
+    width: 220,
+    height: 60,
     marginBottom: 8,
-    letterSpacing: 1,
   },
-  tagline: {
-    fontSize: 16,
-    color: '#999',
+  logoSubtitle: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '700',
+    letterSpacing: 1.2,
   },
-  form: {
-    width: '100%',
+
+  /* Traditional Opaque Card */
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: '#F2E2E2',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: 24,
   },
-  inputContainer: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cardHeaderLeft: { flex: 1, paddingRight: 8 },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#2E1010',
+    marginBottom: 4,
+  },
+  cardSub: {
+    fontSize: 12.5,
+    color: '#8B7575',
+    fontWeight: '600',
+  },
+  cardHeaderIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#FFF5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F2E2E2',
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#F2E2E2',
     marginBottom: 20,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+
+  fieldGroup: { marginBottom: 16 },
+  fieldLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: T.primary,
+    letterSpacing: 0.8,
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  passwordContainer: {
+  field: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#333',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    height: 52,
+    paddingHorizontal: 4,
   },
-  passwordInput: {
-    flex: 1,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
+  fieldFocused: {
+    borderColor: T.primary,
+    backgroundColor: '#FFFFFF',
   },
-  eyeButton: {
-    padding: 16,
-  },
-  eyeText: {
-    fontSize: 20,
-  },
-  forgotButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  loginButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+  fieldIconWrap: {
+    width: 40,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
   },
-  loginButtonText: {
-    fontSize: 18,
+  fieldInput: {
+    flex: 1,
+    fontSize: 14.5,
+    color: '#2E1010',
     fontWeight: '600',
-    color: '#000',
   },
-  loginButtonDisabled: {
-    opacity: 0.6,
+  eyeBtn: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  divider: {
+
+  forgotRow: { alignSelf: 'flex-end', marginBottom: 20 },
+  forgotTxt: {
+    fontSize: 13,
+    color: T.primary,
+    fontWeight: '700',
+  },
+
+  loginBtn: {
+    backgroundColor: T.accent, // Gold button matching landing page button
+    borderRadius: 16,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  loginBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    gap: 8,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#333',
+  loginBtnTxt: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: T.primary, // Red text on gold background
+    letterSpacing: 1.5,
   },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: '#666',
-  },
-  signupButton: {
+
+  signupSection: { alignItems: 'center' },
+  signupRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 4,
   },
-  signupText: {
+  signupTxt: {
     fontSize: 14,
-    color: '#999',
+    color: T.white,
+    fontWeight: '600',
+  },
+  signupLinkWrap: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: T.accent,
   },
   signupLink: {
-    color: '#fff',
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '800',
+    color: T.accent,
   },
 });

@@ -349,6 +349,7 @@ const getUserProfile = async (req, res) => {
                 birthDate: user.birthDate,
                 streakCount: user.streakCount || 0,
                 lastLoginDate: user.lastLoginDate,
+                loginDates: user.loginDates || [],
                 heartSurgery: user.heartSurgery,
                 withinSixMonths: user.withinSixMonths,
                 heartSurgeryComment: user.heartSurgeryComment,

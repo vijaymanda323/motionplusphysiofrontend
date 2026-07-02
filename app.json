@@ -31,6 +31,9 @@
         "projectId": "424bab7b-bfe0-4b9d-9352-7cf28ef16dfd"
       }
     },
-    "owner": "vijaybuilds"
+    "owner": "vijaybuilds",
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
