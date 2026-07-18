@@ -38,7 +38,7 @@ const CLINICS = [
     phone: '+91 98765 43210',
     mapUrl: 'https://maps.app.goo.gl/WkogueHsDyqUqDmg8?g_st=ic',
     ward: 'Shivamogga',
-    mapImage: require('./assets/images/map_shivamogga.png'),
+    mapImage: require('./assets/images/map_shivamogga.jpg'),
   },
   {
     id: '1',
@@ -52,7 +52,7 @@ const CLINICS = [
     phone: '+91 87654 32109',
     mapUrl: 'https://maps.app.goo.gl/oH7EavUMiphe9TCR6?g_st=ic',
     ward: 'Gachibowli',
-    mapImage: require('./assets/images/map_gachibowli.png'),
+    mapImage: require('./assets/images/map_gachibowli.jpg'),
   },
   {
     id: '2',
@@ -80,7 +80,7 @@ const CLINICS = [
     phone: '+91 65432 10987',
     mapUrl: 'https://maps.app.goo.gl/SvAjjwWyimS8tHPBA?g_st=ic',
     ward: 'Puppalaguda',
-    mapImage: require('./assets/images/map_puppalaguda_main.png'),
+    mapImage: require('./assets/images/map_puppalaguda_main.jpg'),
   }
 ];
 

@@ -22,7 +22,7 @@ import API_BASE_URL from "./config/api";
 
 const { width } = Dimensions.get("window");
 const AVATAR_IMG = require("./assets/images/Hamza.png"); // Premium photo avatar
-const BODY_MAP = require("./assets/images/body_pain_map_premium.png");
+const BODY_MAP = require("./assets/images/body_pain_map_premium.jpg");
 
 // ── findphysio.org Red/Orange/Gold Theme ───────────────────────
 const T = {
@@ -46,7 +46,7 @@ const BLOG_PREVIEW = [
     title: "Stroke Recovery: Evidence-Based Rehab",
     category: "Recovery",
     time: "12 min",
-    image: require("./assets/images/blog_featured.png"),
+    image: require("./assets/images/blog_featured.jpg"),
     accent: T.primary,
   },
   {
@@ -54,7 +54,7 @@ const BLOG_PREVIEW = [
     title: "Chronic Back Pain: New Treatment Methods",
     category: "Pain Care",
     time: "8 min",
-    image: require("./assets/images/blog_pain.png"),
+    image: require("./assets/images/blog_pain.jpg"),
     accent: "#C62828",
   },
   {
@@ -62,7 +62,7 @@ const BLOG_PREVIEW = [
     title: "Posture Correction for Desk Workers",
     category: "Posture",
     time: "6 min",
-    image: require("./assets/images/blog_posture.png"),
+    image: require("./assets/images/blog_posture.jpg"),
     accent: "#FF7043",
   },
   {
@@ -70,7 +70,7 @@ const BLOG_PREVIEW = [
     title: "Sports Injury Rehab Protocols",
     category: "Sports",
     time: "10 min",
-    image: require("./assets/images/blog_sports.png"),
+    image: require("./assets/images/blog_sports.jpg"),
     accent: "#FFE500",
   },
   {
@@ -78,7 +78,7 @@ const BLOG_PREVIEW = [
     title: "Neck & Shoulder Pain: Clinical Guide",
     category: "Cervical",
     time: "7 min",
-    image: require("./assets/images/blog_neck.png"),
+    image: require("./assets/images/blog_neck.jpg"),
     accent: T.secondary,
   },
 ];
@@ -92,7 +92,7 @@ const NAV_ITEMS = [
 
 const SERVICES = [
   {
-    image: require("./assets/images/service_pain_map.png"),
+    image: require("./assets/images/service_pain_map.jpg"),
     title: "Pain Area Map",
     sub: "Locate & track pain zones",
     route: "PainArea",
@@ -100,7 +100,7 @@ const SERVICES = [
     bg: "rgba(158, 10, 10, 0.08)",
   },
   {
-    image: require("./assets/images/service_pain_bingo.png"),
+    image: require("./assets/images/service_pain_bingo.jpg"),
     title: "Pain Bingo",
     sub: "Gamified symptom tracker",
     route: "PainBingo",

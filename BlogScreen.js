@@ -55,7 +55,7 @@ const ARTICLES = [
     time: "12 min",
     excerpt:
       "A comprehensive medical guide outlining post-stroke physical therapy protocols, neurological plasticity milestones, and home exercises.",
-    img: require("./assets/images/blog_featured.png"),
+    img: require("./assets/images/blog_featured.jpg"),
     accent: T.primary,
     featured: true,
     emoji: "🧠",
@@ -137,7 +137,7 @@ const ARTICLES = [
     time: "7 min",
     excerpt:
       "Biomechanical analysis of cellular posture strain and simple exercises to alleviate headaches and upper back pain.",
-    img: require("./assets/images/blog_neck.png"),
+    img: require("./assets/images/blog_neck.jpg"),
     accent: T.secondary,
     featured: false,
     emoji: "🦒",
@@ -217,7 +217,7 @@ const ARTICLES = [
     time: "6 min",
     excerpt:
       "Quick cervical spine adjustments that relieve shoulder knots and neck stiffness during extended sitting.",
-    img: require("./assets/images/blog_posture.png"),
+    img: require("./assets/images/blog_posture.jpg"),
     accent: T.teal,
     featured: false,
     emoji: "🦴",
@@ -273,7 +273,7 @@ const ARTICLES = [
     time: "10 min",
     excerpt:
       "Phased recovery timelines showing how professional athletes combine range-of-motion routines with progressive loading.",
-    img: require("./assets/images/blog_sports.png"),
+    img: require("./assets/images/blog_sports.jpg"),
     accent: T.orange,
     featured: false,
     emoji: "🏃",
@@ -328,7 +328,7 @@ const ARTICLES = [
     time: "5 min",
     excerpt:
       "Traditional ergonomics gives us the foundation, modern technology builds on it providing real-time tracking.",
-    img: require("./assets/images/blog_posture.png"),
+    img: require("./assets/images/blog_posture.jpg"),
     accent: T.teal,
     featured: false,
     emoji: "🏢",
@@ -369,7 +369,7 @@ const ARTICLES = [
     time: "8 min",
     excerpt:
       "The Truth About Online Physiotherapy in the Age of AI and smart telehealth platforms.",
-    img: require("./assets/images/blog_pain.png"),
+    img: require("./assets/images/blog_pain.jpg"),
     accent: T.secondary,
     featured: false,
     emoji: "💻",

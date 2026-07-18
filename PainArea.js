@@ -169,7 +169,7 @@ export default function PainAreaScreen({ navigation }) {
         {/* ── Visual Pain Map Illustration ── */}
         <View style={[s.card, { alignItems: 'center', padding: 8, backgroundColor: '#FFFFFF' }]}>
           <Image
-            source={require('./assets/images/body_pain_map_premium.png')}
+            source={require('./assets/images/body_pain_map_premium.jpg')}
             style={{ width: '100%', height: 180, borderRadius: 12 }}
             resizeMode="contain"
           />
