@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Motion Physio",
-    "slug": "motion-phsyio",
+    "slug": "motionplusphysio",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -28,7 +28,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "424bab7b-bfe0-4b9d-9352-7cf28ef16dfd"
+        "projectId": "bbf995bf-0eed-4705-9059-347c88864746"
       }
     },
     "owner": "vijaybuilds",

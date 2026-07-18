@@ -11,7 +11,7 @@ import { Platform } from 'react-native';
 // Set to true to use production URL even in development mode (useful for testing deployed backend)
 const USE_PRODUCTION_URL = false; // Using local backend server for testing
 
-const YOUR_COMPUTER_IP = '192.168.1.38'; // Your computer's IP address (updated to match actual IP)
+const YOUR_COMPUTER_IP = '192.168.0.13'; // Your computer's IP address (updated to match actual IP)
 const PRODUCTION_URL = 'https://motion-video-1.onrender.com/api';
 
 let API_BASE_URL;

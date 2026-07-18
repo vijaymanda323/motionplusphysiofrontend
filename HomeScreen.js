@@ -108,7 +108,7 @@ const SERVICES = [
     bg: "rgba(255, 112, 67, 0.08)",
   },
   {
-    image: require("./assets/images/service_hardware_scan.png"),
+    image: require("./assets/images/service_hardware_scan.jpg"),
     title: "Hardware Scan",
     sub: "Know your body in 60s",
     route: "HardwareScan",
@@ -116,7 +116,7 @@ const SERVICES = [
     bg: "rgba(76, 175, 80, 0.08)",
   },
   {
-    image: require("./assets/images/service_muscle_challenge.png"),
+    image: require("./assets/images/service_muscle_challenge.jpg"),
     title: "Muscle Challenge",
     sub: "Can your muscles beat it?",
     route: "MuscleChallenge",
@@ -132,7 +132,7 @@ const SERVICES = [
     bg: "rgba(255, 160, 0, 0.08)",
   },
   {
-    image: require("./assets/images/service_consult.png"),
+    image: require("./assets/images/service_consult.jpg"),
     title: "Consult Physio",
     sub: "Book expert sessions",
     route: "PhysioConsult",
