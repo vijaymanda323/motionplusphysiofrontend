@@ -124,7 +124,7 @@ const SERVICES = [
     bg: "rgba(33, 150, 243, 0.08)",
   },
   {
-    image: require("./assets/images/service_quick_relief.png"),
+    image: require("./assets/images/service_quick_relief.jpg"),
     title: "Quick Relief",
     sub: "Guided physio routines",
     route: "QuickRelief",
@@ -619,7 +619,7 @@ export default function HomeScreen({ navigation }) {
         {/* ── DR QUOTE CARD ── */}
         <View style={styles.quoteCard}>
           <Image
-            source={require("./assets/images/physio_doctor_avatar.png")}
+            source={require("./assets/images/physio_doctor_avatar.jpg")}
             style={styles.quoteDocImg}
             resizeMode="contain"
           />

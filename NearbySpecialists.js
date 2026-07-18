@@ -66,7 +66,7 @@ const CLINICS = [
     phone: '+91 76543 21098',
     mapUrl: 'https://maps.app.goo.gl/PrNMhh25NQ81K1Cx8?g_st=ic',
     ward: 'Manikonda',
-    mapImage: require('./assets/images/map_star_centre.png'),
+    mapImage: require('./assets/images/map_star_centre.jpg'),
   },
   {
     id: '3',
